@@ -1,0 +1,4 @@
+cron:
+  - description: '5 Minute'
+    url: /minute
+    schedule: every 5 minutes
