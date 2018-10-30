@@ -58,8 +58,8 @@ exports.history = (req, res) => {
         let p = e.instrument.split('-')
 
         if (p[0] === 'BTC' && p[3]) {
-          e.bid_iv = calcIV(btcPrice, dt, p, e.bid)
-          e.ask_iv = calcIV(btcPrice, dt, p, e.ask)
+          e.bid_iv = calcIV(btcPrice, dt, p, e.bid * btcPrice)
+          e.ask_iv = calcIV(btcPrice, dt, p, e.ask * btcPrice)
         }
       })
 
