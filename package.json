@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "deploy": "gcloud functions deploy history --runtime nodejs8 --trigger-http --memory=128MB",
+    "deploy_cron": "gcloud app deploy cron.yaml",
+    "deploy_app": "gcloud app deploy app.yaml"
+  },
   "devDependencies": {
     "eslint": "^5.8.0"
   },
