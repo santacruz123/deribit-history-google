@@ -70,9 +70,7 @@ exports.history = (req, res) => {
         .dataset('deribit')
         .table('history')
         .insert(rows)
-        .then(() => {
-          res.send(`Inserted ${rows.length} rows`)
-        })
+        .then(() => res.send(rows))
     })
     .catch(err => {
       res.status(500).send('Something broke!' + err.message)
