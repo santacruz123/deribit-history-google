@@ -48,11 +48,12 @@ exports.history = (req, res) => {
               return { instrument: i.instrumentName, bid: null, ask: null }
             })
         },
-        { concurrency: 10 },
+        { concurrency: 7 },
       )
     })
     .then(rows => {
       let btcPrice = rows.filter(e => e.instrument === 'BTC-PERPETUAL')[0].bid
+      let ethPrice = rows.filter(e => e.instrument === 'ETH-PERPETUAL')[0].bid
 
       rows.forEach(e => {
         let p = e.instrument.split('-')
@@ -60,6 +61,17 @@ exports.history = (req, res) => {
         if (p[0] === 'BTC' && p[3]) {
           e.bid_iv = e.bid ? calcIV(btcPrice, dt, p, e.bid * btcPrice) : null
           e.ask_iv = e.ask ? calcIV(btcPrice, dt, p, e.ask * btcPrice) : null
+
+          e.bid_iv = e.bid_iv > 1000 ? 1000 : e.bid_iv
+          e.ask_iv = e.ask_iv > 1000 ? 1000 : e.ask_iv
+        }
+
+        if (p[0] === 'ETH' && p[3]) {
+          e.bid_iv = e.bid ? calcIV(ethPrice, dt, p, e.bid * ethPrice) : null
+          e.ask_iv = e.ask ? calcIV(ethPrice, dt, p, e.ask * ethPrice) : null
+
+          e.bid_iv = e.bid_iv > 1000 ? 1000 : e.bid_iv
+          e.ask_iv = e.ask_iv > 1000 ? 1000 : e.ask_iv
         }
       })
 
@@ -73,6 +85,6 @@ exports.history = (req, res) => {
         .then(() => res.send(rows))
     })
     .catch(err => {
-      res.status(500).send('Something broke!' + err.message)
+      res.status(500).send('Something broke!' + err.toString())
     })
 }
