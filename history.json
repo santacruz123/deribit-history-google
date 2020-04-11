@@ -1,0 +1,28 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "dt",
+    "type": "TIMESTAMP"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "instrument",
+    "type": "STRING"
+  },
+  {
+    "name": "bid",
+    "type": "NUMERIC"
+  },
+  {
+    "name": "ask",
+    "type": "NUMERIC"
+  },
+  {
+    "name": "bid_iv",
+    "type": "NUMERIC"
+  },
+  {
+    "name": "ask_iv",
+    "type": "NUMERIC"
+  }
+]
