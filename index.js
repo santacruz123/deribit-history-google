@@ -1,89 +1,44 @@
 const BigQuery = require('@google-cloud/bigquery')
 const axios = require('axios')
+const flatten = require('lodash/flatten')
 const Promise = require('bluebird')
-const IV = require('implied-volatility')
-const moment = require('moment')
 
 const bigquery = new BigQuery({ projectId: 'deribit-220920' })
 
-function calcIV(spot, dt, i, price) {
-  if (price === null) {
-    return null
-  }
+const currs = ['BTC', 'ETH']
 
-  const type = i[3] === 'C' ? 'call' : 'put'
+const round = x => Math.round(x * 100) / 100
 
-  const t = moment(i[1] + ' 09:00', 'DDMMMYY HH:mm').diff(moment.unix(dt), 'years', true)
-  const iv = IV.getImpliedVolatility(+price, +spot, +i[2], t, 0, type, 1)
-  return Math.round(iv * 10000) / 100
-}
+exports.history_v2 = (req, res) => {
+  const dt = Math.round(new Date().getTime() / 1000)
 
-exports.history = (req, res) => {
-  let dt
-
-  axios
-    .get('https://www.deribit.com/api/v1/public/getinstruments')
-    .then(r => r.data.result)
-    .then(r => {
-      dt = Math.round(new Date().getTime() / 1000)
-
-      return Promise.map(
-        r,
-        i => {
-          return axios
-            .get('https://www.deribit.com/api/v1/public/getorderbook', {
-              params: { instrument: i.instrumentName },
-            })
-            .then(r => r.data.result)
-            .then(r => {
-              return {
-                dt,
-                instrument: i.instrumentName,
-                bid: r.bids && r.bids[0] ? r.bids[0].price : null,
-                ask: r.asks && r.asks[0] ? r.asks[0].price : null,
-              }
-            })
-            .catch(err => {
-              console.error(new Error(`${i.instrumentName} ${err.message}`))
-              return { instrument: i.instrumentName, bid: null, ask: null }
-            })
-        },
-        { concurrency: 7 },
-      )
-    })
-    .then(rows => {
-      let btcPrice = rows.filter(e => e.instrument === 'BTC-PERPETUAL')[0].bid
-      let ethPrice = rows.filter(e => e.instrument === 'ETH-PERPETUAL')[0].bid
-
-      rows.forEach(e => {
-        let p = e.instrument.split('-')
-
-        if (p[0] === 'BTC' && p[3]) {
-          e.bid_iv = e.bid ? calcIV(btcPrice, dt, p, e.bid * btcPrice) : null
-          e.ask_iv = e.ask ? calcIV(btcPrice, dt, p, e.ask * btcPrice) : null
-
-          e.bid_iv = e.bid_iv > 1000 ? 1000 : e.bid_iv
-          e.ask_iv = e.ask_iv > 1000 ? 1000 : e.ask_iv
-        }
-
-        if (p[0] === 'ETH' && p[3]) {
-          e.bid_iv = e.bid ? calcIV(ethPrice, dt, p, e.bid * ethPrice) : null
-          e.ask_iv = e.ask ? calcIV(ethPrice, dt, p, e.ask * ethPrice) : null
-
-          e.bid_iv = e.bid_iv > 1000 ? 1000 : e.bid_iv
-          e.ask_iv = e.ask_iv > 1000 ? 1000 : e.ask_iv
+  Promise.map(currs, async curr => {
+    return Promise.all([
+      axios.get(`https://www.deribit.com/api/v2/public/get_index?currency=${curr}`)
+      .then(r => r.data.result[curr]),
+      axios
+        .get(`https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=${curr}`)
+        .then(r => r.data.result),
+    ]).then(([index, instruments]) =>
+      instruments.map(i => {
+        return {
+          dt,
+          instrument: i.instrument_name,
+          bid: i.bid_price,
+          ask: i.ask_price,
+          base: i.instrument_name.endsWith('-P') || i.instrument_name.endsWith('-C') ? round(i.underlying_price) : index,
         }
       })
-
-      return rows
-    })
-    .then(rows => {
-      return bigquery
+    )
+  })
+    .then(instruments => flatten(instruments))
+    .then(rows =>
+      bigquery
         .dataset('deribit')
-        .table('history')
+        .table('history_v2')
         .insert(rows)
         .then(() => res.send(rows))
-    })
+    )
     .catch(err => {
       res.status(500).send('Something broke!' + err.toString())
     })

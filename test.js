@@ -1,2 +1,2 @@
 const m = require('./index')
-m.history()
+m.history_v2()

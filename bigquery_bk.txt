@@ -1,3 +1,3 @@
-bq extract --destination_format CSV --compression GZIP --noprint_header deribit.history 'gs://deribit_bk/history_1_*.csv'
+bq extract --destination_format CSV --compression GZIP --noprint_header deribit.history_v2 'gs://deribit_bk/history_v2_1_*.csv'
 
-bq load --source_format=CSV deribit.history_1 'gs://deribit_bk/history_1_*.csv'
+bq load --source_format=CSV deribit.history_v2_1 'gs://deribit_bk/history_v2_1_*.csv'
