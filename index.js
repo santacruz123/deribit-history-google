@@ -30,8 +30,8 @@ exports.history_v2 = (req, res) => {
         }
       })
     )
-  })
-    .then(instruments => flatten(instruments))
+  },{ concurrency: currs.length })
+    .then(instruments => flatten(instruments).filter(o => o.bid || o.ask))
     .then(rows =>
       bigquery
         .dataset('deribit')
