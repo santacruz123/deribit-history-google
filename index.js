@@ -9,7 +9,7 @@ const currs = ['BTC', 'ETH']
 
 const round = x => Math.round(x * 100) / 100
 
-exports.history_v2 = (req, res) => {
+exports.history_v3 = (req, res) => {
   const dt = Math.round(new Date().getTime() / 1000)
 
   Promise.map(currs, async curr => {
@@ -25,6 +25,7 @@ exports.history_v2 = (req, res) => {
           dt,
           instrument: i.instrument_name,
           bid: i.bid_price,
+          mark: i.mark_price,
           ask: i.ask_price,
           base: i.instrument_name.endsWith('-P') || i.instrument_name.endsWith('-C') ? round(i.underlying_price) : index,
         }
@@ -35,7 +36,7 @@ exports.history_v2 = (req, res) => {
     .then(rows =>
       bigquery
         .dataset('deribit')
-        .table('history_v2')
+        .table('history_v3')
         .insert(rows)
         .then(() => res.send(rows))
     )

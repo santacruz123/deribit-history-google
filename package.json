@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "deploy": "gcloud config set project deribit-220920 && gcloud functions deploy history_v2 --runtime nodejs10 --trigger-http --memory=128MB",
+    "dev": "gcloud functions call history_v3",
+    "deploy": "gcloud config set project deribit-220920 && gcloud functions deploy history_v3 --runtime nodejs10 --trigger-http --memory=128MB",
     "deploy_cron": "gcloud config set project deribit-220920 && gcloud app deploy cron.yaml",
     "deploy_app": "gcloud config set project deribit-220920 && gcloud app deploy app.yaml"
   },
